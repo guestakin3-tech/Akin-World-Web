@@ -2,6 +2,8 @@ import express from "express"
 import cors from "cors"
 import dotenv from "dotenv"
 import axios from "axios"
+import path from "path"
+import { fileURLToPath } from "url"
 
 dotenv.config()
 const app = express()
@@ -22,31 +24,21 @@ let music = [
   {id: 1, title: "Peace & Unity", artist: "Akin Sokpah", streamUrl: "https://www.example.com/music1.mp3"},
 ]
 
-// --- Routes ---
-app.get("/", (req,res)=> res.send("Akin World Web Backend is running ✅"))
-
-// Updates
+// --- API Routes ---
 app.get("/api/updates", (req,res)=> res.json(updates))
-
-// Movies
 app.get("/api/media/movies", (req,res)=> res.json(movies))
-
-// Music
 app.get("/api/media/music", (req,res)=> res.json(music))
 
 // AI Music Creator (mock integration with external API)
 app.post("/api/ai-music/create", async (req,res)=>{
   const { prompt } = req.body
   try {
-    // Example: calling a third-party AI music API
-    // Replace this with a real service like Mubert, OpenAI Audio, etc.
     const response = await axios.post(
       "https://api.example-ai-music.com/generate",
       { prompt },
       { headers: { "Authorization": `Bearer ${process.env.AI_MUSIC_API_KEY}` } }
     )
 
-    // Assume the API returns a URL
     res.json({ url: response.data.url || "https://www.example.com/generated-music.mp3" })
   } catch (err) {
     console.error(err.message)
@@ -54,6 +46,17 @@ app.post("/api/ai-music/create", async (req,res)=>{
   }
 })
 
+// --- Serve frontend build (React) ---
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+app.use(express.static(path.join(__dirname, "../frontend/dist")))
+
+// Fallback: send index.html for any non-API route
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../frontend/dist/index.html"))
+})
+
 app.listen(PORT, ()=> {
-  console.log(`Backend running on http://localhost:${PORT}`)
+  console.log(`✅ Akin World Web running at http://localhost:${PORT}`)
 })
